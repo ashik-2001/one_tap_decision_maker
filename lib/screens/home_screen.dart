@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/decision_engine.dart';
 import 'result_screen.dart';
 
@@ -15,6 +17,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final List<TextEditingController> _optionControllers = [];
   late AnimationController _buttonAnimationController;
   late Animation<double> _buttonScaleAnimation;
+  
+  // AdMob Banner
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
 
   @override
   void initState() {
@@ -33,6 +39,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         curve: Curves.easeInOut,
       ),
     );
+    
+    // Load banner ad
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    final adUnitId = Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/6300978111' // Test ad unit ID for Android
+        : 'ca-app-pub-3940256099942544/2934735716'; // Test ad unit ID for iOS
+
+    _bannerAd = BannerAd(
+      adUnitId: adUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) {
+            setState(() {
+              _isBannerAdLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          if (mounted) {
+            setState(() {
+              _isBannerAdLoaded = false;
+            });
+          }
+        },
+      ),
+    );
+
+    _bannerAd?.load();
   }
 
   @override
@@ -42,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       controller.dispose();
     }
     _buttonAnimationController.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -162,7 +203,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             prefixIcon: const Icon(Icons.help_outline),
                             filled: true,
                             fillColor: colorScheme.surfaceContainerHighest,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 20),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
@@ -180,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
                           onChanged: (_) => setState(() {}),
-                          maxLines: 1,
+                          maxLines: 2,
                         ),
                       ],
                     ),
@@ -354,10 +396,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              
+              // Add spacing for banner ad at bottom
+              if (_isBannerAdLoaded) const SizedBox(height: 60),
             ],
           ),
         ),
       ),
+      bottomNavigationBar: _isBannerAdLoaded && _bannerAd != null
+          ? SafeArea(
+              child: SizedBox(
+                height: 50,
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            )
+          : null,
     );
   }
 }
