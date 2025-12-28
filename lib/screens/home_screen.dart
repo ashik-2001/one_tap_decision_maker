@@ -45,9 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _loadBannerAd() {
-    final adUnitId = Platform.isAndroid
-        ? 'ca-app-pub-3940256099942544/6300978111' // Test ad unit ID for Android
-        : 'ca-app-pub-3940256099942544/2934735716'; // Test ad unit ID for iOS
+    final adUnitId = 'ca-app-pub-9272549583449021/9657877409';
 
     _bannerAd = BannerAd(
       adUnitId: adUnitId,
